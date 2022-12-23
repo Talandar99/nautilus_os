@@ -1,2 +1,2 @@
 # Nautilus 
-### Modern Operating system for containerised enviroments
+### Modern Operating System for containerised enviroments

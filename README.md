@@ -5,3 +5,7 @@
 - Internet connection
 - Linux based OS
 - gcc 
+- docker
+
+# How to use?
+run "build.sh"

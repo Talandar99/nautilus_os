@@ -1,4 +1,4 @@
-# Nautilus 
+# Nautilus ⚓
 ### Operating System for containerised enviroments
 
 ### Requirements

@@ -54,4 +54,4 @@ echo "docker buildx build -t nautilus ." >> build_and_run.sh
 echo "docker run -it nautilus bin/sh" >> build_and_run.sh
 chmod +x build_and_run.sh
 echo "building and running container"
-./run.sh
+./build_and_run.sh

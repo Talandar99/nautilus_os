@@ -2,6 +2,7 @@
 # make distro directory 
 mkdir nautilus
 cd nautilus || exit
+
 ##################################
 # Kernel
 ##################################

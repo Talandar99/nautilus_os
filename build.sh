@@ -1,15 +1,18 @@
 #!/bin/bash
+
+#Settings
+KERNEL_VERSION=6.3.2
+SYSTEM_VERSION=0.1.0
 # make distro directory 
 mkdir nautilus
 cd nautilus || exit
-
 ##################################
 # Kernel
 ##################################
 echo "Getting kernel"
-wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-6.2.tar.xz
-tar xf linux-6.2.tar.xz
-cd linux-6.2 || exit
+wget https://cdn.kernel.org/pub/linux/kernel/v6.x/linux-$KERNEL_VERSION.tar.xz
+tar xf linux-$KERNEL_VERSION.tar.xz
+cd linux-$KERNEL_VERSION || exit
 # configure kernel (default)
 echo "creating configuration"
 make defconfig
@@ -27,8 +30,8 @@ cd ..
 echo "creating all directories"
 mkdir rootfs
 mkdir rootfs/dev 
-mkdir	rootfs/proc 
-mkdir	rootfs/sys 
+mkdir rootfs/proc 
+mkdir rootfs/sys 
 mkdir rootfs/bin
 mkdir rootfs/tmp
 mkdir rootfs/root
@@ -40,9 +43,25 @@ mkdir rootfs/etc/ssl/certs
 ##################################
 #create configuration files
 ##################################
+touch rootfs/etc/group
+touch rootfs/etc/passwd
 echo "build-users-group = nixbld" > rootfs/etc/nix/nix.conf
 echo "build-users = 8" >> rootfs/etc/nix/nix.conf
+#add configuration to profile
 echo "export SSL_CERT_DIR=/etc/ssl/certs" > rootfs/etc/profile
+echo "source /nix/var/nix/profiles/default/etc/profile.d/nix.sh" >> rootfs/etc/profile
+#add system name and version
+echo "NAME=\"Nautilus\"" > rootfs/etc/os-release
+echo "VERSION=\"$SYSTEM_VERSION\"" >> rootfs/etc/os-release
+echo "ID=nautilus" >> rootfs/etc/os-release
+echo "PRETTY_NAME=\"Nautilus $SYSTEM_VERSION⚓\"" >> rootfs/etc/os-release
+
+##################################
+#create nix installation sctipt
+##################################
+curl -L https://nixos.org/nix/install >> rootfs/nix.sh
+chmod +x rootfs/nix.sh
+
 ##################################
 # Bussybox
 ##################################
@@ -50,6 +69,7 @@ echo "getting bussybox static executable"
 wget https://busybox.net/downloads/binaries/1.35.0-x86_64-linux-musl/busybox
 chmod +x busybox
 mv busybox rootfs/bin/busybox
+
 ##################################
 # create symlinks for busybox
 ##################################
@@ -59,6 +79,7 @@ for prog in $(./busybox --list); do
 		ln -s /bin/busybox $prog
 done
 cd ../..
+
 ##################################
 #install curl and certificates
 ##################################
@@ -66,6 +87,7 @@ wget https://github.com/moparisthebest/static-curl/releases/latest/download/curl
 mv curl-amd64 curl
 chmod +x curl
 mv curl rootfs/bin/curl
+
 ##################################
 # Dockerfile
 ##################################
@@ -80,8 +102,15 @@ echo "SHELL [\"/bin/sh\", \"-c\"]" >> Dockerfile
 # get certifocates
 echo "RUN wget https://curl.haxx.se/ca/cacert.pem -O /etc/ssl/certs/ca-certificates.crt" >> Dockerfile
 # set user as root
-echo "RUN wget https://curl.haxx.se/ca/cacert.pem -O /etc/ssl/certs/ca-certificates.crt" >> Dockerfile
 echo "ENV USER=root" >> Dockerfile
+#install nix
+echo "RUN addgroup --system nixbld" >> Dockerfile
+echo "RUN adduser --system --home /var/empty --shell /sbin/nologin --no-create-home --ingroup nixbld nixbld" >> Dockerfile
+echo "RUN ./nix.sh" >> Dockerfile
+echo "RUN rm nix.sh" >> Dockerfile
+echo "ENV PATH=\"/nix/var/nix/profiles/default/bin:\${PATH}\"" >> Dockerfile
+echo "RUN nix-env -i neofetch-unstable" >> Dockerfile
+
 ##################################
 # build container and run
 ##################################

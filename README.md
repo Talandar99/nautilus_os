@@ -10,10 +10,3 @@
 
 ### How to use?
 run "build.sh"
-
-#### Running lua script
-1. install dependancies 
-```
-luarocks make
-```
-2. run `build.lua`

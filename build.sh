@@ -6,6 +6,7 @@ SYSTEM_VERSION=0.1.0
 # make distro directory 
 mkdir nautilus
 cd nautilus || exit
+
 ##################################
 # Kernel
 ##################################
@@ -24,6 +25,7 @@ echo "installing kernel"
 mkdir ../kernel-bin
 make INSTALL_PATH=../kernel-bin install
 cd ..
+
 ##################################
 # create filesystem
 ##################################
@@ -40,6 +42,7 @@ mkdir rootfs/etc
 mkdir rootfs/etc/nix/
 mkdir rootfs/etc/ssl/
 mkdir rootfs/etc/ssl/certs
+
 ##################################
 #create configuration files
 ##################################

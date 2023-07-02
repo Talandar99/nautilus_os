@@ -1,4 +1,4 @@
-# ⚓Nautilus ⚓
+# ⚓ Nautilus ⚓
 ### Operating System for containerised enviroments
 ## Goal
 - Create working Operating system from contenerised enviroments

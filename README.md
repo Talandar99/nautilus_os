@@ -11,9 +11,9 @@
 ## TODO
 - [x] working prototype
 - [x] add package manager
-- [] figure out how to compile software from scratch in container
-- [] add support for different processor arch
-- [] optimize
+- [ ] figure out how to compile software from scratch in container
+- [ ] add support for different processor arch
+- [ ] optimize
 
 ## How to run?
 ### Requirements

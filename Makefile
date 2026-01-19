@@ -15,7 +15,7 @@ help:
 	@printf "  $(GREEN)make run_container$(RESET)			- Run the Docker container\n"
 	@printf "  $(GREEN)make build_container$(RESET)			- Build the Docker image\n"
 	@printf "  ├ $(YELLOW)make setup_dirs$(RESET)			- Create essential system directories\n"
-	@printf "  ├ $(YELLOW)make create_configs$(RESET)			- Create configuration files\n"
+	@printf "  ├ $(YELLOW)make create_configs$(RESET)	    - Create configuration files\n"
 	@printf "  ├ $(YELLOW)make install_busybox$(RESET)		- Download and install BusyBox\n"
 	@printf "  ├ $(YELLOW)make install_curl$(RESET)			- Download and install static cURL\n"
 	@printf "  ├ $(YELLOW)make install_musl_gcc$(RESET)		- Download and install static musl-gcc toolchain\n"

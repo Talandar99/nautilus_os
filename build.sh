@@ -12,8 +12,8 @@ SYSTEM_VERSION="0.2.0"
 DISTRO_DIR="nautilus"
 ROOTFS_DIR="${DISTRO_DIR}/rootfs"
 
-#BUILD_ARCHITECTURE="AMD64"
-BUILD_ARCHITECTURE="AARCH64"
+BUILD_ARCHITECTURE="AMD64"
+#BUILD_ARCHITECTURE="AARCH64"
 
 if [ "$BUILD_ARCHITECTURE" = "AMD64" ]; then
   ARCH="x86_64"
@@ -313,17 +313,17 @@ function main(){
 
 
     #------------------------------
-    #docker buildx build --platform linux/amd64 -t nautilus:amd64 --load .
-    #docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus:amd64
-    #docker save -o nautilus_amd64.tar nautilus:amd64
+    docker buildx build --platform linux/amd64 -t nautilus:amd64 --load .
+    docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus:amd64
+    docker save -o nautilus_amd64.tar nautilus:amd64
     #------------------------------
-    docker buildx build --platform linux/arm64 -t nautilus:aarch64 --load .
-    docker save -o nautilus_aarch64.tar nautilus:aarch64
+    #docker buildx build --platform linux/arm64 -t nautilus:aarch64 --load .
+    #docker save -o nautilus_aarch64.tar nautilus:aarch64
     #docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus:aarch64
     #docker load -i nautilus_aarch64.tar
     #------------------------------
-	#docker build -t nautilus . 
-    #docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus bin/sh
+	docker build -t nautilus . 
+    docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus bin/sh
     #------------------------------
 }
 main

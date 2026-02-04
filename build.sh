@@ -222,6 +222,126 @@ get_and_install_curl(){
 	chmod +x curl
 	mv curl ${ROOTFS_DIR}/bin/curl
 }
+
+get_and_install_lua() {
+    LUA_VERSION="5.4.6"
+    LUA_TARBALL="lua-${LUA_VERSION}.tar.gz"
+    LUA_URL="https://www.lua.org/ftp/${LUA_TARBALL}"
+    LUA_BUILD_DIR="lua_build"
+
+    mkdir -p "$LUA_BUILD_DIR"
+    
+    cd "$LUA_BUILD_DIR" || exit 1
+    [ -f "$LUA_TARBALL" ] || wget "$LUA_URL" -O "$LUA_TARBALL" || exit 1
+    
+    rm -rf "lua-${LUA_VERSION}"
+    tar xvf "$LUA_TARBALL" || exit 1
+    cd "lua-${LUA_VERSION}" || exit 1
+
+    make clean || true
+    make linux -j"$(nproc)" \
+        CC="${CROSS_COMPILE}gcc" \
+        AR="${CROSS_COMPILE}ar rcu" \
+        RANLIB="${CROSS_COMPILE}ranlib" \
+        MYCFLAGS="-O2 -static" \
+        MYLDFLAGS="-static" || exit 1
+
+    cp -f src/lua  "../../${ROOTFS_DIR}/bin/lua"  || exit 1
+    cp -f src/luac "../../${ROOTFS_DIR}/bin/luac" || exit 1
+
+    cd ../.. || exit 1
+}
+
+build_install_oniguruma() {
+    ONU_VERSION="6.9.9"
+    ONU_TARBALL="onig-${ONU_VERSION}.tar.gz"
+    ONU_URL="https://github.com/kkos/oniguruma/releases/download/v${ONU_VERSION}/${ONU_TARBALL}"
+    ONU_DIR="oniguruma_build"
+    SYSROOT_DIR="deps_sysroot"
+    HOST="${CROSS_COMPILE%-}"
+
+    mkdir -p "$ONU_DIR" "$SYSROOT_DIR"
+    cd "$ONU_DIR" || exit 1
+
+    [ -f "$ONU_TARBALL" ] || wget "$ONU_URL" -O "$ONU_TARBALL" || exit 1
+
+    rm -rf "onig-${ONU_VERSION}"
+    tar xvf "$ONU_TARBALL" || exit 1
+    cd "onig-${ONU_VERSION}" || exit 1
+
+    make distclean >/dev/null 2>&1 || true
+
+    CC="${CROSS_COMPILE}gcc" \
+    AR="${CROSS_COMPILE}ar" \
+    RANLIB="${CROSS_COMPILE}ranlib" \
+    CFLAGS="-O2 -static -std=gnu17 -Wno-error=incompatible-pointer-types" \
+    ./configure \
+        --host="$HOST" \
+        --prefix="$(pwd)/../../${SYSROOT_DIR}/usr" \
+        --disable-shared \
+        --enable-static || exit 1
+
+    make -j"$(nproc)" || exit 1
+    make install || exit 1
+
+    cd ../.. || exit 1
+}
+
+get_and_install_jq() {
+    JQ_VERSION="1.7.1"
+    JQ_TARBALL="jq-${JQ_VERSION}.tar.gz"
+    JQ_URL="https://github.com/jqlang/jq/releases/download/jq-${JQ_VERSION}/${JQ_TARBALL}"
+    JQ_DIR="jq_build"
+    SYSROOT_DIR="deps_sysroot"
+    HOST="${CROSS_COMPILE%-}"
+
+    build_install_oniguruma
+
+    mkdir -p "$JQ_DIR"
+    cd "$JQ_DIR" || exit 1
+
+    [ -f "$JQ_TARBALL" ] || wget "$JQ_URL" -O "$JQ_TARBALL" || exit 1
+
+    rm -rf "jq-${JQ_VERSION}"
+    tar xvf "$JQ_TARBALL" || exit 1
+    cd "jq-${JQ_VERSION}" || exit 1
+
+    make distclean >/dev/null 2>&1 || true
+
+    CPPFLAGS="-I$(pwd)/../../${SYSROOT_DIR}/usr/include"
+    # WAŻNE: -static zostaw, ale do pełnej statyczności dodamy -all-static przy linku
+    LDFLAGS="-L$(pwd)/../../${SYSROOT_DIR}/usr/lib -static"
+    LIBS="-lonig"
+
+    # bez -static tutaj
+    CFLAGS="-O2 -std=gnu17 -Wno-error -Wno-error=incompatible-pointer-types"
+
+    CC="${CROSS_COMPILE}gcc" \
+    AR="${CROSS_COMPILE}ar" \
+    RANLIB="${CROSS_COMPILE}ranlib" \
+    CFLAGS="$CFLAGS" \
+    CPPFLAGS="$CPPFLAGS" \
+    LDFLAGS="$LDFLAGS" \
+    LIBS="$LIBS" \
+    ./configure \
+        --host="$HOST" \
+        --disable-shared \
+        --enable-static \
+        --without-docs || exit 1
+
+    # KLUCZ: libtool wymaga -all-static na etapie linkowania programu
+    make -j"$(nproc)" \
+        CFLAGS="$CFLAGS" \
+        CPPFLAGS="$CPPFLAGS" \
+        LDFLAGS="$LDFLAGS -all-static" \
+        LIBS="$LIBS" || exit 1
+
+    mkdir -p "../../${ROOTFS_DIR}/bin"
+    cp -f jq "../../${ROOTFS_DIR}/bin/jq" || exit 1
+
+    cd ../.. || exit 1
+}
+
 dockerfile_init(){
     echo 'FROM scratch'                                                                         | tee Dockerfile
     echo 'COPY nautilus/rootfs/ /'                                                              | tee -a Dockerfile
@@ -303,9 +423,11 @@ function main(){
     create_configs
     compile_and_install_busybox
     get_and_install_nginx
-    #generate_beszel_keys
+    generate_beszel_keys
     get_and_install_beszel
     get_and_install_curl
+    get_and_install_lua
+    get_and_install_jq
     #------------------------------
     #create_init_file_agent
     create_init_file_master
@@ -313,17 +435,19 @@ function main(){
 
 
     #------------------------------
-    docker buildx build --platform linux/amd64 -t nautilus:amd64 --load .
-    docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus:amd64
-    docker save -o nautilus_amd64.tar nautilus:amd64
+    #docker buildx build --platform linux/amd64 -t nautilus:amd64 --load .
+    #docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus:amd64
+    #docker save -o nautilus_amd64.tar nautilus:amd64
     #------------------------------
     #docker buildx build --platform linux/arm64 -t nautilus:aarch64 --load .
     #docker save -o nautilus_aarch64.tar nautilus:aarch64
     #docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus:aarch64
     #docker load -i nautilus_aarch64.tar
     #------------------------------
-	docker build -t nautilus . 
-    docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus bin/sh
+	#docker build -t nautilus . 
+    #docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus bin/sh
+    #------------------------------
+    #docker run --rm -it --entrypoint /bin/sh -p 80:80 -p 8090:8090 -p 45876:45876 nautilus
     #------------------------------
 }
 main

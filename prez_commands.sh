@@ -1,7 +1,7 @@
 ls
 ./build.sh
 docker build -t nautilus .
-docker run --rm -it -p 80:80 -p 8090:8090 -p 45876:45876 nautilus
+#docker run --rm -it -p 80:80 -p 8090:8090 -p 45876:45876 nautilus
 docker run -d --rm --name nautilus -p 80:80 -p 8090:8090 -p 45876:45876 nautilus
 #nginx http://localhost/
 #beszel http://localhost:8090/

@@ -359,15 +359,15 @@ function create_init_file_agent() {
     echo -e "${YELLOW}create_init_file${RESET}"
     INIT_FILE="${ROOTFS_DIR}/init.sh"
 
-    echo '#!/bin/sh'                                                        | tee    "$INIT_FILE" > /dev/null
-    echo ''                                                                 | tee -a "$INIT_FILE" > /dev/null
-    echo 'echo "Starting nginx..."'                                         | tee -a "$INIT_FILE" > /dev/null
-    echo '/usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf'  | tee -a "$INIT_FILE" > /dev/null 
-    echo ''                                                                 | tee -a "$INIT_FILE" > /dev/null
-    echo 'echo "Starting beszel-agent..."'                                  | tee -a "$INIT_FILE" > /dev/null
-    echo '/usr/local/bin/beszel-agent &'                                    | tee -a "$INIT_FILE" > /dev/null
-    echo '# Keep container running'                                         | tee -a "$INIT_FILE" > /dev/null
-    echo 'tail -f /dev/null'                                                | tee -a "$INIT_FILE" > /dev/null
+    echo '#!/bin/sh'                                                            | tee    "$INIT_FILE" > /dev/null
+    echo ''                                                                     | tee -a "$INIT_FILE" > /dev/null
+    echo 'echo "Starting nginx..."'                                             | tee -a "$INIT_FILE" > /dev/null
+    echo '/usr/local/nginx/sbin/nginx -c /usr/local/nginx/conf/nginx.conf'      | tee -a "$INIT_FILE" > /dev/null 
+    echo ''                                                                     | tee -a "$INIT_FILE" > /dev/null
+    echo 'echo "Starting beszel-agent..."'                                      | tee -a "$INIT_FILE" > /dev/null
+    echo 'KEY_FILE=/beszel_data/id_ed25519.pub /usr/local/bin/beszel-agent &'   | tee -a "$INIT_FILE" > /dev/null
+    echo '# Keep container running'                                             | tee -a "$INIT_FILE" > /dev/null
+    echo 'tail -f /dev/null'                                                    | tee -a "$INIT_FILE" > /dev/null
 
     chmod +x "$INIT_FILE"
 }
@@ -429,15 +429,14 @@ function main(){
     get_and_install_lua
     get_and_install_jq
     #------------------------------
-    #create_init_file_agent
-    create_init_file_master
+    create_init_file_agent
+    #create_init_file_master
     dockerfile_init
-
-
     #------------------------------
     #docker buildx build --platform linux/amd64 -t nautilus:amd64 --load .
+    docker build -t nautilus:amd64 .
+    docker save -o nautilus_amd64.tar nautilus:amd64
     #docker run -it --rm -p 80:80 -p 8090:8090 -p 45876:45876 nautilus:amd64
-    #docker save -o nautilus_amd64.tar nautilus:amd64
     #------------------------------
     #docker buildx build --platform linux/arm64 -t nautilus:aarch64 --load .
     #docker save -o nautilus_aarch64.tar nautilus:aarch64
